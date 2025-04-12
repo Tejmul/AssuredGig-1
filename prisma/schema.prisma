@@ -1,0 +1,160 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  password      String
+  role          Role      @default(CLIENT)
+  bio           String?   @db.Text
+  skills        Json?
+  portfolio     Json?
+  rate          Float?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  jobsPosted    Job[]         @relation("ClientJobs")
+  proposals     Proposal[]    @relation("FreelancerProposals")
+  contracts     Contract[]    @relation("FreelancerContracts")
+  clientContracts Contract[]  @relation("ClientContracts")
+  reviews       Review[]      @relation("ReviewerReviews")
+  receivedReviews Review[]    @relation("RevieweeReviews")
+  messages      Message[]
+}
+
+model Job {
+  id          String    @id @default(uuid())
+  title       String
+  description String    @db.Text
+  budget      Float
+  deadline    DateTime?
+  skills      Json?
+  status      JobStatus @default(OPEN)
+  isPremium   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  clientId    String
+  client      User      @relation("ClientJobs", fields: [clientId], references: [id])
+  proposals   Proposal[]
+  contract    Contract?
+}
+
+model Proposal {
+  id            String   @id @default(cuid())
+  jobId         String
+  freelancerId  String
+  coverLetter   String
+  bidAmount     Float
+  status        ProposalStatus @default(PENDING)
+  feedback      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  job           Job      @relation(fields: [jobId], references: [id])
+  freelancer    User     @relation("FreelancerProposals", fields: [freelancerId], references: [id])
+  contract      Contract?
+
+  @@index([jobId])
+  @@index([freelancerId])
+}
+
+model Contract {
+  id          String    @id @default(uuid())
+  status      ContractStatus @default(PENDING)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  jobId       String    @unique
+  job         Job       @relation(fields: [jobId], references: [id])
+  freelancerId String
+  freelancer  User      @relation("FreelancerContracts", fields: [freelancerId], references: [id])
+  clientId    String
+  client      User      @relation("ClientContracts", fields: [clientId], references: [id])
+  milestones  Milestone[]
+  messages    Message[]
+  reviews     Review[]
+  proposalId    String   @unique
+  proposal      Proposal @relation(fields: [proposalId], references: [id])
+}
+
+model Milestone {
+  id          String    @id @default(uuid())
+  description String    @db.Text
+  amount      Float
+  status      MilestoneStatus @default(PENDING)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  contractId  String
+  contract    Contract  @relation(fields: [contractId], references: [id])
+}
+
+model Message {
+  id          String    @id @default(uuid())
+  content     String    @db.Text
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  contractId  String
+  contract    Contract  @relation(fields: [contractId], references: [id])
+  senderId    String
+  sender      User      @relation(fields: [senderId], references: [id])
+}
+
+model Review {
+  id          String    @id @default(uuid())
+  rating      Int
+  comment     String?   @db.Text
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  contractId  String
+  contract    Contract  @relation(fields: [contractId], references: [id])
+  reviewerId  String
+  reviewer    User      @relation("ReviewerReviews", fields: [reviewerId], references: [id])
+  revieweeId  String
+  reviewee    User      @relation("RevieweeReviews", fields: [revieweeId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  CLIENT
+  FREELANCER
+}
+
+enum JobStatus {
+  OPEN
+  CLOSED
+}
+
+enum ProposalStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum ContractStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum MilestoneStatus {
+  PENDING
+  COMPLETED
+} 
