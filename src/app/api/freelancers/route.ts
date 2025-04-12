@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import { Role } from "@prisma/client"
 
 const querySchema = z.object({
   page: z.string().optional(),
@@ -22,7 +23,7 @@ export async function GET(req: Request) {
 
     // Build filter conditions
     const where = {
-      role: "FREELANCER",
+      role: Role.FREELANCER,
       ...(query.search && {
         OR: [
           { name: { contains: query.search } },
@@ -31,7 +32,7 @@ export async function GET(req: Request) {
       }),
       ...(query.skills && {
         skills: {
-          hasSome: query.skills.split(","),
+          array_contains: query.skills.split(","),
         },
       }),
       ...(query.minRate && {

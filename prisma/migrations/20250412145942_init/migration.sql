@@ -1,18 +1,3 @@
--- CreateEnum
-CREATE TYPE `Role` AS ENUM ('ADMIN', 'CLIENT', 'FREELANCER');
-
--- CreateEnum
-CREATE TYPE `JobStatus` AS ENUM ('OPEN', 'CLOSED');
-
--- CreateEnum
-CREATE TYPE `ProposalStatus` AS ENUM ('PENDING', 'ACCEPTED', 'REJECTED');
-
--- CreateEnum
-CREATE TYPE `ContractStatus` AS ENUM ('PENDING', 'ACTIVE', 'COMPLETED', 'CANCELLED');
-
--- CreateEnum
-CREATE TYPE `MilestoneStatus` AS ENUM ('PENDING', 'COMPLETED');
-
 -- CreateTable
 CREATE TABLE `User` (
     `id` VARCHAR(191) NOT NULL,
@@ -51,14 +36,17 @@ CREATE TABLE `Job` (
 -- CreateTable
 CREATE TABLE `Proposal` (
     `id` VARCHAR(191) NOT NULL,
-    `coverLetter` TEXT NOT NULL,
-    `bidAmount` DOUBLE NOT NULL,
-    `status` ENUM('PENDING', 'ACCEPTED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updatedAt` DATETIME(3) NOT NULL,
     `jobId` VARCHAR(191) NOT NULL,
     `freelancerId` VARCHAR(191) NOT NULL,
+    `coverLetter` VARCHAR(191) NOT NULL,
+    `bidAmount` DOUBLE NOT NULL,
+    `status` ENUM('PENDING', 'ACCEPTED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
+    `feedback` VARCHAR(191) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
 
+    INDEX `Proposal_jobId_idx`(`jobId`),
+    INDEX `Proposal_freelancerId_idx`(`freelancerId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -71,8 +59,10 @@ CREATE TABLE `Contract` (
     `jobId` VARCHAR(191) NOT NULL,
     `freelancerId` VARCHAR(191) NOT NULL,
     `clientId` VARCHAR(191) NOT NULL,
+    `proposalId` VARCHAR(191) NOT NULL,
 
     UNIQUE INDEX `Contract_jobId_key`(`jobId`),
+    UNIQUE INDEX `Contract_proposalId_key`(`proposalId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -113,6 +103,23 @@ CREATE TABLE `Review` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `Resume` (
+    `id` VARCHAR(191) NOT NULL,
+    `userId` VARCHAR(191) NOT NULL,
+    `personalInfo` JSON NOT NULL,
+    `summary` TEXT NOT NULL,
+    `experience` JSON NOT NULL,
+    `education` JSON NOT NULL,
+    `skills` JSON NOT NULL,
+    `certifications` JSON NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `Resume_userId_key`(`userId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `Job` ADD CONSTRAINT `Job_clientId_fkey` FOREIGN KEY (`clientId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -132,6 +139,9 @@ ALTER TABLE `Contract` ADD CONSTRAINT `Contract_freelancerId_fkey` FOREIGN KEY (
 ALTER TABLE `Contract` ADD CONSTRAINT `Contract_clientId_fkey` FOREIGN KEY (`clientId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `Contract` ADD CONSTRAINT `Contract_proposalId_fkey` FOREIGN KEY (`proposalId`) REFERENCES `Proposal`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `Milestone` ADD CONSTRAINT `Milestone_contractId_fkey` FOREIGN KEY (`contractId`) REFERENCES `Contract`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -147,4 +157,7 @@ ALTER TABLE `Review` ADD CONSTRAINT `Review_contractId_fkey` FOREIGN KEY (`contr
 ALTER TABLE `Review` ADD CONSTRAINT `Review_reviewerId_fkey` FOREIGN KEY (`reviewerId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Review` ADD CONSTRAINT `Review_revieweeId_fkey` FOREIGN KEY (`revieweeId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE; 
+ALTER TABLE `Review` ADD CONSTRAINT `Review_revieweeId_fkey` FOREIGN KEY (`revieweeId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Resume` ADD CONSTRAINT `Resume_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -1,118 +1,108 @@
-# AssuredGig - Premium Freelance Platform
+# AssuredGig - Freelance Platform
 
-AssuredGig is a modern freelance platform that connects clients with talented freelancers in a secure and premium environment. Built with Next.js 13, React, and a beautiful dark neon theme.
+AssuredGig is a modern freelance platform that connects clients with talented freelancers.
 
 ## Features
 
-- 🎨 Modern, responsive UI with dark neon theme
-- 🔐 Secure authentication with NextAuth.js
-- 💼 Job posting and bidding system
-- 👥 Freelancer profiles with portfolios
-- 💰 Secure payment processing with Stripe
-- 💬 Real-time messaging with Socket.io
-- ⭐ Review and rating system
-- 🔍 Advanced search and filtering
+- User authentication with NextAuth.js
+- Resume creation and management
+- Job posting and browsing
+- Proposal submission and management
+- Contract and milestone tracking
+- Real-time messaging
+- Payment processing with Stripe
+- Responsive design with Tailwind CSS
 
 ## Tech Stack
 
-- **Frontend**:
-  - Next.js 13 (App Router)
-  - React
-  - Tailwind CSS
-  - Shadcn/ui
-  - Framer Motion
+- Next.js 14
+- TypeScript
+- Prisma ORM
+- MySQL Database
+- NextAuth.js
+- Stripe
+- Tailwind CSS
+- Framer Motion
 
-- **Backend**:
-  - Node.js
-  - Express.js
-  - Prisma
-  - MySQL
-
-- **Authentication**:
-  - NextAuth.js
-  - JWT
-
-- **Payment**:
-  - Stripe
-  - PayPal
-
-- **Real-time**:
-  - Socket.io
-
-## Getting Started
+## Deployment on Vercel
 
 ### Prerequisites
 
-- Node.js 18+ and npm
-- MySQL database
-- Stripe account (for payments)
+1. A Vercel account
+2. A MySQL database (e.g., PlanetScale, Railway, or any other MySQL provider)
+3. OAuth credentials for Google and GitHub
+4. Stripe account and API keys
+5. Email service provider credentials
 
-### Installation
+### Deployment Steps
 
-1. Clone the repository:
+1. **Fork and Clone the Repository**
    ```bash
    git clone https://github.com/yourusername/assuredgig.git
    cd assuredgig
    ```
 
-2. Install dependencies:
+2. **Set Up Environment Variables**
+   - Copy `.env.production.example` to `.env.production`
+   - Fill in all the required environment variables with your production values
+
+3. **Deploy to Vercel**
+   - Connect your GitHub repository to Vercel
+   - Import the project
+   - Add all environment variables from `.env.production` to Vercel's environment variables section
+   - Deploy the project
+
+4. **Database Setup**
+   - Run database migrations on your production database:
+     ```bash
+     npm run db:deploy
+     ```
+
+5. **Verify Deployment**
+   - Check if the application is running correctly
+   - Test authentication, job posting, and other features
+
+### Environment Variables
+
+Make sure to set the following environment variables in Vercel:
+
+- `DATABASE_URL`: Your production database URL
+- `NEXTAUTH_SECRET`: A secure random string for NextAuth.js
+- `NEXTAUTH_URL`: Your production URL (e.g., https://assuredgig.vercel.app)
+- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: OAuth credentials for Google
+- `GITHUB_ID` and `GITHUB_SECRET`: OAuth credentials for GitHub
+- `STRIPE_SECRET_KEY`, `STRIPE_PUBLIC_KEY`, and `STRIPE_WEBHOOK_SECRET`: Stripe API keys
+- Email server configuration variables
+
+## Development
+
+### Local Setup
+
+1. **Install Dependencies**
    ```bash
    npm install
    ```
 
-3. Set up environment variables:
-   Create a `.env.local` file in the root directory with the following variables:
-   ```
-   DATABASE_URL="mysql://user:password@localhost:3306/assuredgig"
-   NEXTAUTH_SECRET="your-secret-key"
-   NEXTAUTH_URL="http://localhost:3000"
-   STRIPE_SECRET_KEY="your-stripe-secret-key"
-   STRIPE_PUBLIC_KEY="your-stripe-public-key"
-   ```
+2. **Set Up Environment Variables**
+   - Copy `.env.example` to `.env`
+   - Fill in all the required environment variables
 
-4. Set up the database:
+3. **Set Up Database**
    ```bash
-   npx prisma generate
-   npx prisma db push
+   npm run db:migrate
    ```
 
-5. Run the development server:
+4. **Start Development Server**
    ```bash
    npm run dev
    ```
 
-6. Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## Project Structure
-
-```
-assuredgig/
-├── src/
-│   ├── app/              # Next.js 13 app directory
-│   ├── components/       # React components
-│   ├── lib/             # Utility functions
-│   ├── styles/          # Global styles
-│   ├── types/           # TypeScript types
-│   ├── utils/           # Helper functions
-│   ├── hooks/           # Custom React hooks
-│   ├── services/        # API services
-│   └── store/           # State management
-├── prisma/              # Database schema
-├── public/              # Static assets
-└── package.json         # Dependencies
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+5. **Open the Application**
+   - Navigate to http://localhost:3000
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 ## Acknowledgments
 

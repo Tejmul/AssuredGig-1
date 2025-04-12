@@ -28,9 +28,10 @@ model User {
   proposals     Proposal[]    @relation("FreelancerProposals")
   contracts     Contract[]    @relation("FreelancerContracts")
   clientContracts Contract[]  @relation("ClientContracts")
-  reviews       Review[]      @relation("ReviewerReviews")
-  receivedReviews Review[]    @relation("RevieweeReviews")
+  reviewsGiven    Review[]  @relation("ReviewerReviews")
+  reviewsReceived Review[]  @relation("RevieweeReviews")
   messages      Message[]
+  resume          Resume?
 }
 
 model Job {
@@ -128,6 +129,22 @@ model Review {
   reviewer    User      @relation("ReviewerReviews", fields: [reviewerId], references: [id])
   revieweeId  String
   reviewee    User      @relation("RevieweeReviews", fields: [revieweeId], references: [id])
+}
+
+model Resume {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  personalInfo  Json
+  summary       String    @db.Text
+  experience    Json
+  education     Json
+  skills        Json
+  certifications Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  user          User      @relation(fields: [userId], references: [id])
 }
 
 enum Role {
