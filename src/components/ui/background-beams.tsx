@@ -38,7 +38,11 @@ export const BackgroundBeams = ({ className }: { className?: string }) => {
         </motion.div>
         <div className="relative z-10 h-full w-full">
           <div className="absolute inset-0">
-            {[...Array(3)].map((_, i) => (
+            {[
+              { left: "20%", top: "30%" },
+              { left: "50%", top: "70%" },
+              { left: "80%", top: "40%" },
+            ].map((position, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
@@ -55,9 +59,9 @@ export const BackgroundBeams = ({ className }: { className?: string }) => {
                 }}
                 className="absolute h-[500px] w-[500px] rounded-full bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-pink-500/20 blur-3xl"
                 style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  transform: `translate(-50%, -50%) rotate(${Math.random() * 360}deg)`,
+                  left: position.left,
+                  top: position.top,
+                  transform: `translate(-50%, -50%) rotate(${i * 120}deg)`,
                 }}
               />
             ))}
