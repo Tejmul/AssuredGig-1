@@ -101,10 +101,10 @@ export default async function ProposalPage({ params }: ProposalPageProps) {
                 <h3 className="font-medium">Budget</h3>
                 <p>${proposal.job.budget}</p>
               </div>
-              <div>
+              <div className="mt-6">
                 <h3 className="font-medium">Required Skills</h3>
                 <div className="flex flex-wrap gap-2 mt-1">
-                  {proposal.job.skills.map((skill) => (
+                  {Array.isArray(proposal.job.skills) && (proposal.job.skills as string[]).map((skill) => (
                     <Badge key={skill} variant="secondary">
                       {skill}
                     </Badge>
@@ -190,7 +190,7 @@ export default async function ProposalPage({ params }: ProposalPageProps) {
                   <div>
                     <h3 className="font-medium">Skills</h3>
                     <div className="flex flex-wrap gap-2 mt-1">
-                      {proposal.freelancer.skills.map((skill) => (
+                      {Array.isArray(proposal.freelancer.skills) && (proposal.freelancer.skills as string[]).map((skill) => (
                         <Badge key={skill} variant="secondary">
                           {skill}
                         </Badge>
@@ -200,7 +200,7 @@ export default async function ProposalPage({ params }: ProposalPageProps) {
                   {proposal.freelancer.portfolio && (
                     <div>
                       <h3 className="font-medium">Portfolio</h3>
-                      <p className="text-sm">{proposal.freelancer.portfolio}</p>
+                      <p className="text-sm">{typeof proposal.freelancer.portfolio === 'string' ? proposal.freelancer.portfolio : ''}</p>
                     </div>
                   )}
                 </>

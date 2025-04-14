@@ -89,12 +89,9 @@ export function MobileMenu({ isOpen, onClose, items }: MobileMenuProps) {
                 })}
               </nav>
 
-              <div className="mt-auto space-y-4">
-                <Button variant="glass" className="w-full" asChild>
-                  <Link href="/login">Sign In</Link>
-                </Button>
+              <div className="mt-auto">
                 <Button variant="default" glow="cyan" className="w-full" asChild>
-                  <Link href="/signup">Join Now</Link>
+                  <Link href="/signup">Sign Up</Link>
                 </Button>
               </div>
             </div>

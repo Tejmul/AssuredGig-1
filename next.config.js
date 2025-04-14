@@ -16,6 +16,13 @@ const nextConfig = {
     optimizeCss: true,
     scrollRestoration: true,
   },
+  // Improve performance
+  poweredByHeader: false,
+  compress: true,
+  // Fix potential issues
+  typescript: {
+    ignoreBuildErrors: false,
+  },
 }
 
 module.exports = nextConfig 

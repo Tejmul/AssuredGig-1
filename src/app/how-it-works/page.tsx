@@ -3,6 +3,7 @@
 import { motion } from "framer-motion"
 import { NeonText } from "@/components/ui/neon-text"
 import { GlassCard } from "@/components/ui/glass-card"
+import { BackgroundBeams } from "@/components/ui/background-beams"
 
 const steps = [
   {
@@ -52,48 +53,51 @@ const steps = [
 
 export default function HowItWorksPage() {
   return (
-    <div className="min-h-screen bg-black">
-      <div className="container mx-auto px-4 py-24">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-16"
-        >
-          <NeonText size="3xl" color="cyan" gradient className="mb-4">
-            How AssuredGig Works
-          </NeonText>
-          <p className="text-gray-300 text-lg max-w-2xl mx-auto">
-            A simple four-step process to connect with the perfect freelancer or client.
-          </p>
-        </motion.div>
+    <main className="min-h-screen bg-black relative">
+      <BackgroundBeams className="absolute inset-0 z-0" />
+      <div className="relative z-10 container mx-auto px-4 py-8">
+        <div className="flex flex-col gap-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-16"
+          >
+            <NeonText size="3xl" color="cyan" gradient className="mb-4">
+              How AssuredGig Works
+            </NeonText>
+            <p className="text-gray-300 text-lg max-w-2xl mx-auto">
+              A simple four-step process to connect with the perfect freelancer or client.
+            </p>
+          </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {steps.map((step, index) => (
-            <motion.div
-              key={step.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-            >
-              <GlassCard
-                glowColor={step.color as "cyan" | "magenta" | "gold"}
-                className="p-6 h-full"
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {steps.map((step, index) => (
+              <motion.div
+                key={step.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
               >
-                <div className={`text-${step.color}-400 mb-4`}>
-                  {step.icon}
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-2">
-                  {step.title}
-                </h3>
-                <p className="text-gray-400">
-                  {step.description}
-                </p>
-              </GlassCard>
-            </motion.div>
-          ))}
+                <GlassCard
+                  glowColor={step.color as "cyan" | "magenta" | "gold"}
+                  className="p-6 h-full"
+                >
+                  <div className={`text-${step.color}-400 mb-4`}>
+                    {step.icon}
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    {step.title}
+                  </h3>
+                  <p className="text-gray-400">
+                    {step.description}
+                  </p>
+                </GlassCard>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </main>
   )
 } 

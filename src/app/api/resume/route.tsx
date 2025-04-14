@@ -1,8 +1,20 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/db";
 import { z } from "zod";
+import { Role } from "@prisma/client";
+
+interface Session {
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    role: Role;
+    isTwoFactorEnabled: boolean;
+    isOAuth: boolean;
+  };
+}
 
 // Schema for resume data validation
 const resumeSchema = z.object({
@@ -42,9 +54,9 @@ const resumeSchema = z.object({
 // GET handler to retrieve a user's resume
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions) as Session | null;
     
-    if (!session || !session.user) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -52,7 +64,7 @@ export async function GET() {
     }
 
     // Get the user's resume from the database
-    const resume = await prisma.resume.findUnique({
+    const resume = await db.resume.findUnique({
       where: {
         userId: session.user.id,
       },
@@ -67,9 +79,9 @@ export async function GET() {
 
     return NextResponse.json(resume);
   } catch (error) {
-    console.error("Error fetching resume:", error);
+    console.error("[RESUME_GET]", error);
     return NextResponse.json(
-      { error: "Failed to fetch resume" },
+      { error: "Internal error" },
       { status: 500 }
     );
   }
@@ -78,12 +90,19 @@ export async function GET() {
 // POST handler to create or update a user's resume
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions) as Session | null;
     
-    if (!session || !session.user) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
+      );
+    }
+
+    if (session.user.role !== "FREELANCER") {
+      return NextResponse.json(
+        { error: "Only freelancers can create resumes" },
+        { status: 403 }
       );
     }
 
@@ -93,57 +112,43 @@ export async function POST(request: Request) {
     const validatedData = resumeSchema.parse(body);
     
     // Check if the user already has a resume
-    const existingResume = await prisma.resume.findUnique({
+    const existingResume = await db.resume.findUnique({
       where: {
         userId: session.user.id,
       },
     });
 
-    let resume;
-    
     if (existingResume) {
       // Update the existing resume
-      resume = await prisma.resume.update({
+      const updatedResume = await db.resume.update({
         where: {
-          id: existingResume.id,
-        },
-        data: {
-          personalInfo: validatedData.personalInfo,
-          summary: validatedData.summary,
-          experience: validatedData.experience,
-          education: validatedData.education,
-          skills: validatedData.skills,
-          certifications: validatedData.certifications,
-          updatedAt: new Date(),
-        },
-      });
-    } else {
-      // Create a new resume
-      resume = await prisma.resume.create({
-        data: {
           userId: session.user.id,
-          personalInfo: validatedData.personalInfo,
-          summary: validatedData.summary,
-          experience: validatedData.experience,
-          education: validatedData.education,
-          skills: validatedData.skills,
-          certifications: validatedData.certifications,
         },
+        data: validatedData,
       });
+
+      return NextResponse.json(updatedResume);
     }
 
-    return NextResponse.json(resume);
+    // Create a new resume
+    const newResume = await db.resume.create({
+      data: {
+        ...validatedData,
+        userId: session.user.id,
+      },
+    });
+
+    return NextResponse.json(newResume);
   } catch (error) {
+    console.error("[RESUME_POST]", error);
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: error.errors[0].message },
         { status: 400 }
       );
     }
-    
-    console.error("Error saving resume:", error);
     return NextResponse.json(
-      { error: "Failed to save resume" },
+      { error: "Internal error" },
       { status: 500 }
     );
   }

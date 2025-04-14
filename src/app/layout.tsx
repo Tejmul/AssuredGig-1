@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import '@/styles/globals.css'
 import { Navbar } from '@/components/navigation/navbar'
+import { Toaster } from 'sonner'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -22,6 +23,7 @@ export default function RootLayout({
           <Navbar />
           <main className="flex-1">{children}</main>
         </div>
+        <Toaster />
       </body>
     </html>
   )

@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { authOptions } from "@/lib/auth.config"
+import { db } from "@/lib/db"
 import { getServerSession } from "next-auth"
+import type { Session as NextAuthSession } from "next-auth"
+import { authOptions } from "@/lib/auth.config"
 import { z } from "zod"
+import { JobStatus, ProposalStatus, Prisma } from "@prisma/client"
 
 const updateJobSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters").optional(),
@@ -14,23 +16,61 @@ const updateJobSchema = z.object({
   isPremium: z.boolean().optional(),
 })
 
+interface Session extends NextAuthSession {
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    role: JobStatus;
+    isTwoFactorEnabled: boolean;
+    isOAuth: boolean;
+  };
+}
+
+type FreelancerSelect = {
+  id: string
+  name: string
+  email: string
+  rate: number | null
+  skills: Prisma.JsonValue
+  portfolio: Prisma.JsonValue
+}
+
+type ProposalWithFreelancer = {
+  freelancer: FreelancerSelect
+  status: ProposalStatus
+  id: string
+  createdAt: Date
+  updatedAt: Date
+  jobId: string
+  freelancerId: string
+  coverLetter: string
+  bidAmount: number
+  feedback: string | null
+}
+
 export async function GET(
   req: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const job = await prisma.job.findUnique({
+    const session = await getServerSession(authOptions) as Session | null;
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const job = await db.job.findUnique({
       where: { id: params.id },
       include: {
         client: {
           select: {
             id: true,
             name: true,
-            _count: {
-              select: {
-                contracts: true,
-              },
-            },
+            email: true,
           },
         },
         proposals: {
@@ -39,34 +79,32 @@ export async function GET(
               select: {
                 id: true,
                 name: true,
-                skills: true,
+                email: true,
                 rate: true,
-                _count: {
-                  select: {
-                    contracts: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        contract: {
-          include: {
-            freelancer: {
-              select: {
-                id: true,
-                name: true,
+                skills: true,
+                portfolio: true,
               },
             },
           },
         },
       },
-    })
+    }) as { client: { id: string; name: string; email: string }; proposals: ProposalWithFreelancer[] } | null;
 
     if (!job) {
       return NextResponse.json(
         { error: "Job not found" },
         { status: 404 }
+      )
+    }
+
+    // Check if user has access to this job
+    if (
+      job.client.id !== session.user.id &&
+      !job.proposals.some((p) => p.freelancer.id === session.user.id)
+    ) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 403 }
       )
     }
 
@@ -84,18 +122,27 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions) as Session | null;
 
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
-      )
+      );
     }
 
-    const job = await prisma.job.findUnique({
+    const body = await req.json()
+    const data = updateJobSchema.parse(body)
+
+    const job = await db.job.findUnique({
       where: { id: params.id },
-      select: { clientId: true },
+      include: {
+        client: {
+          select: {
+            id: true,
+          },
+        },
+      },
     })
 
     if (!job) {
@@ -105,19 +152,24 @@ export async function PATCH(
       )
     }
 
-    if (job.clientId !== session.user.id) {
+    // Check if user has permission to update this job
+    if (job.client.id !== session.user.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 403 }
       )
     }
 
-    const body = await req.json()
-    const data = updateJobSchema.parse(body)
-
-    const updatedJob = await prisma.job.update({
+    const updatedJob = await db.job.update({
       where: { id: params.id },
-      data,
+      data: {
+        title: data.title,
+        description: data.description,
+        budget: data.budget,
+        deadline: data.deadline,
+        skills: data.skills,
+        status: data.status,
+      },
       include: {
         client: {
           select: {
@@ -149,18 +201,24 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions) as Session | null;
 
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
-      )
+      );
     }
 
-    const job = await prisma.job.findUnique({
+    const job = await db.job.findUnique({
       where: { id: params.id },
-      select: { clientId: true },
+      include: {
+        client: {
+          select: {
+            id: true,
+          },
+        },
+      },
     })
 
     if (!job) {
@@ -170,21 +228,19 @@ export async function DELETE(
       )
     }
 
-    if (job.clientId !== session.user.id) {
+    // Check if user has permission to delete this job
+    if (job.client.id !== session.user.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 403 }
       )
     }
 
-    await prisma.job.delete({
+    await db.job.delete({
       where: { id: params.id },
     })
 
-    return NextResponse.json(
-      { message: "Job deleted successfully" },
-      { status: 200 }
-    )
+    return NextResponse.json({ success: true })
   } catch (error) {
     return NextResponse.json(
       { error: "Something went wrong" },

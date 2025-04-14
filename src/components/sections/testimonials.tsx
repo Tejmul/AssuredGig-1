@@ -156,7 +156,6 @@ export function Testimonials() {
                     size="sm"
                     color={testimonial.color as "cyan" | "magenta" | "gold"}
                     className="text-right"
-                    glow
                   >
                     Verified Client
                   </NeonText>

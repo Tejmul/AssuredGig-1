@@ -3,111 +3,130 @@ import { useEffect, useRef } from "react";
 
 interface ParticleBackgroundProps {
   className?: string;
-  particleCount?: number;
-  particleColor?: string;
   particleSize?: number;
+  particleCount?: number;
   particleSpeed?: number;
+  particleColor?: string;
+}
+
+let canvas: HTMLCanvasElement;
+let ctx: CanvasRenderingContext2D | null;
+let particles: Particle[] = [];
+let particleSize = 2;
+let particleCount = 100;
+let particleSpeed = 1;
+let particleColor = "#ffffff";
+let animationFrameId: number;
+
+class Particle {
+  x: number = 0;
+  y: number = 0;
+  size: number = 0;
+  speedX: number = 0;
+  speedY: number = 0;
+
+  constructor() {
+    if (!canvas) return;
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.size = Math.random() * particleSize;
+    this.speedX = Math.random() * particleSpeed - particleSpeed / 2;
+    this.speedY = Math.random() * particleSpeed - particleSpeed / 2;
+  }
+
+  update() {
+    if (!canvas) return;
+    this.x += this.speedX;
+    this.y += this.speedY;
+
+    if (this.x > canvas.width) {
+      this.x = 0;
+    } else if (this.x < 0) {
+      this.x = canvas.width;
+    }
+
+    if (this.y > canvas.height) {
+      this.y = 0;
+    } else if (this.y < 0) {
+      this.y = canvas.height;
+    }
+  }
+
+  draw() {
+    if (!ctx) return;
+    ctx.fillStyle = particleColor;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function createParticles() {
+  particles = [];
+  for (let i = 0; i < particleCount; i++) {
+    particles.push(new Particle());
+  }
+}
+
+function animate() {
+  if (!ctx || !canvas) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  particles.forEach((particle) => {
+    particle.update();
+    particle.draw();
+  });
+
+  animationFrameId = requestAnimationFrame(animate);
 }
 
 export const ParticleBackground = ({
   className = "",
-  particleCount = 50,
-  particleColor = "#ffffff",
-  particleSize = 2,
-  particleSpeed = 1,
+  particleSize: size = 2,
+  particleCount: count = 100,
+  particleSpeed: speed = 1,
+  particleColor: color = "#ffffff",
 }: ParticleBackgroundProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvasRef.current) return;
 
-    const ctx = canvas.getContext("2d");
+    canvas = canvasRef.current;
+    ctx = canvas.getContext("2d");
+
     if (!ctx) return;
 
-    // Set canvas size
-    const setCanvasSize = () => {
+    particleSize = size;
+    particleCount = count;
+    particleSpeed = speed;
+    particleColor = color;
+
+    const resizeCanvas = () => {
+      if (!canvas || !ctx) return;
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     };
-    setCanvasSize();
-    window.addEventListener("resize", setCanvasSize);
 
-    // Particle class
-    class Particle {
-      x: number;
-      y: number;
-      size: number;
-      speedX: number;
-      speedY: number;
-      color: string;
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
 
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * particleSize;
-        this.speedX = Math.random() * particleSpeed - particleSpeed / 2;
-        this.speedY = Math.random() * particleSpeed - particleSpeed / 2;
-        this.color = particleColor;
-      }
-
-      update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-
-        if (this.x > canvas.width) this.x = 0;
-        if (this.x < 0) this.x = canvas.width;
-        if (this.y > canvas.height) this.y = 0;
-        if (this.y < 0) this.y = canvas.height;
-      }
-
-      draw() {
-        if (!ctx) return;
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    // Create particles
-    const particles: Particle[] = [];
-    for (let i = 0; i < particleCount; i++) {
-      particles.push(new Particle());
-    }
-
-    // Animation loop
-    const animate = () => {
-      if (!ctx) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      particles.forEach((particle) => {
-        particle.update();
-        particle.draw();
-      });
-
-      requestAnimationFrame(animate);
-    };
+    createParticles();
     animate();
 
     return () => {
-      window.removeEventListener("resize", setCanvasSize);
+      window.removeEventListener("resize", resizeCanvas);
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
     };
-  }, [particleCount, particleColor, particleSize, particleSpeed]);
+  }, [size, count, speed, color]);
 
   return (
     <canvas
       ref={canvasRef}
       className={className}
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        pointerEvents: "none",
-        zIndex: -1,
-      }}
+      style={{ position: "fixed", top: 0, left: 0, pointerEvents: "none" }}
     />
   );
 }; 

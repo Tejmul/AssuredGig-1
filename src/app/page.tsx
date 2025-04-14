@@ -1,17 +1,19 @@
 "use client"
 
 import { Hero } from "@/components/sections/hero"
-import { HowItWorks } from "@/components/sections/how-it-works"
 import { FeaturedCategories } from "@/components/sections/featured-categories"
 import { Testimonials } from "@/components/sections/testimonials"
+import { BackgroundBeams } from "@/components/ui/background-beams"
 
 export default function HomePage() {
   return (
-    <main className="bg-black">
-      <Hero />
-      <HowItWorks />
-      <FeaturedCategories />
-      <Testimonials />
+    <main className="bg-black relative">
+      <BackgroundBeams className="absolute inset-0 z-0" />
+      <div className="relative z-10">
+        <Hero />
+        <FeaturedCategories />
+        <Testimonials />
+      </div>
     </main>
   )
 } 

@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { authOptions } from "@/lib/auth.config"
+import { db } from "@/lib/db"
 import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth.config"
 import { z } from "zod"
+import { ProposalStatus } from "@prisma/client"
+import { Role } from "@prisma/client"
 
 const updateProposalSchema = z.object({
   coverLetter: z.string().min(10, "Cover letter must be at least 10 characters").optional(),
@@ -11,21 +13,38 @@ const updateProposalSchema = z.object({
   feedback: z.string().optional(),
 })
 
+const proposalSchema = z.object({
+  coverLetter: z.string().min(10, "Cover letter must be at least 10 characters").optional(),
+  bidAmount: z.number().min(1, "Bid amount must be at least 1").optional(),
+  status: z.enum(["PENDING", "ACCEPTED", "REJECTED"]).optional(),
+})
+
+interface Session {
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    role: Role;
+    isTwoFactorEnabled: boolean;
+    isOAuth: boolean;
+  };
+}
+
 export async function GET(
   req: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions) as Session | null;
 
-    if (!session) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
-      )
+      );
     }
 
-    const proposal = await prisma.proposal.findUnique({
+    const proposal = await db.proposal.findUnique({
       where: { id: params.id },
       include: {
         job: {
@@ -50,8 +69,8 @@ export async function GET(
             id: true,
             name: true,
             email: true,
+            hourlyRate: true,
             skills: true,
-            rate: true,
             portfolio: true,
           },
         },
@@ -67,17 +86,7 @@ export async function GET(
 
     // Check if user has access to this proposal
     if (
-      session.user.role === "CLIENT" &&
-      proposal.job.client.id !== session.user.id
-    ) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 403 }
-      )
-    }
-
-    if (
-      session.user.role === "FREELANCER" &&
+      proposal.job.client.id !== session.user.id &&
       proposal.freelancer.id !== session.user.id
     ) {
       return NextResponse.json(
@@ -100,22 +109,29 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions) as Session | null;
 
-    if (!session) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
-      )
+      );
     }
 
-    const proposal = await prisma.proposal.findUnique({
+    const body = await req.json()
+    const data = updateProposalSchema.parse(body)
+
+    const proposal = await db.proposal.findUnique({
       where: { id: params.id },
       include: {
         job: {
           select: {
             clientId: true,
-            status: true,
+          },
+        },
+        freelancer: {
+          select: {
+            id: true,
           },
         },
       },
@@ -128,10 +144,10 @@ export async function PATCH(
       )
     }
 
-    // Check if user has access to this proposal
+    // Check if user has permission to update this proposal
     if (
-      session.user.role === "CLIENT" &&
-      proposal.job.clientId !== session.user.id
+      proposal.job.clientId !== session.user.id &&
+      proposal.freelancer.id !== session.user.id
     ) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -139,63 +155,19 @@ export async function PATCH(
       )
     }
 
-    if (
-      session.user.role === "FREELANCER" &&
-      proposal.freelancerId !== session.user.id
-    ) {
+    // Only allow status updates from the client
+    if (proposal.job.clientId !== session.user.id) {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "Only the client can update the proposal status" },
         { status: 403 }
       )
     }
 
-    // Only freelancers can update cover letter and bid amount
-    if (
-      session.user.role === "CLIENT" &&
-      (req.body.coverLetter || req.body.bidAmount)
-    ) {
-      return NextResponse.json(
-        { error: "Clients can only update proposal status" },
-        { status: 403 }
-      )
-    }
-
-    // Only clients can update status
-    if (
-      session.user.role === "FREELANCER" &&
-      req.body.status
-    ) {
-      return NextResponse.json(
-        { error: "Freelancers cannot update proposal status" },
-        { status: 403 }
-      )
-    }
-
-    // Check if job is still open when accepting proposal
-    if (
-      req.body.status === "ACCEPTED" &&
-      proposal.job.status !== "OPEN"
-    ) {
-      return NextResponse.json(
-        { error: "Cannot accept proposal for a closed job" },
-        { status: 400 }
-      )
-    }
-
-    const body = await req.json()
-    const data = updateProposalSchema.parse(body)
-
-    // Prepare update data
-    const updateData: any = {}
-    
-    if (data.coverLetter) updateData.coverLetter = data.coverLetter
-    if (data.bidAmount) updateData.bidAmount = data.bidAmount
-    if (data.status) updateData.status = data.status
-    if (data.feedback) updateData.feedback = data.feedback
-
-    const updatedProposal = await prisma.proposal.update({
+    const updatedProposal = await db.proposal.update({
       where: { id: params.id },
-      data: updateData,
+      data: {
+        status: data.status,
+      },
       include: {
         job: {
           select: {
@@ -218,25 +190,6 @@ export async function PATCH(
       },
     })
 
-    // If proposal is accepted, update job status and create contract
-    if (data.status === "ACCEPTED") {
-      await prisma.$transaction([
-        prisma.job.update({
-          where: { id: proposal.jobId },
-          data: { status: "IN_PROGRESS" },
-        }),
-        prisma.contract.create({
-          data: {
-            jobId: proposal.jobId,
-            freelancerId: proposal.freelancerId,
-            clientId: proposal.job.clientId,
-            amount: proposal.bidAmount,
-            status: "ACTIVE",
-          },
-        }),
-      ])
-    }
-
     return NextResponse.json(updatedProposal)
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -258,16 +211,16 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions) as Session | null
 
-    if (!session) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       )
     }
 
-    const proposal = await prisma.proposal.findUnique({
+    const proposal = await db.proposal.findUnique({
       where: { id: params.id },
       include: {
         job: {
@@ -305,7 +258,7 @@ export async function DELETE(
       )
     }
 
-    await prisma.proposal.delete({
+    await db.proposal.delete({
       where: { id: params.id },
     })
 
@@ -314,8 +267,9 @@ export async function DELETE(
       { status: 200 }
     )
   } catch (error) {
+    console.error("[PROPOSAL_DELETE]", error)
     return NextResponse.json(
-      { error: "Something went wrong" },
+      { error: "Internal error" },
       { status: 500 }
     )
   }

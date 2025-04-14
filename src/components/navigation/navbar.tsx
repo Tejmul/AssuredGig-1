@@ -11,7 +11,7 @@ import { MobileMenu } from "./mobile-menu"
 const navItems = [
   { name: "Home", href: "/" },
   { name: "Find Work", href: "/jobs" },
-  { name: "Hire Talent", href: "/freelancers" },
+  { name: "Hire Talent", href: "/hire" },
   { name: "Resume", href: "/resume" },
   { name: "How It Works", href: "/how-it-works" },
 ]
@@ -74,11 +74,8 @@ export function Navbar() {
 
           <div className="flex items-center space-x-4">
             <div className="hidden md:flex items-center space-x-4">
-              <Button variant="glass" size="sm" asChild>
-                <Link href="/login">Sign In</Link>
-              </Button>
               <Button variant="default" size="sm" glow="cyan" asChild>
-                <Link href="/signup">Join Now</Link>
+                <Link href="/signup">Sign Up</Link>
               </Button>
             </div>
             

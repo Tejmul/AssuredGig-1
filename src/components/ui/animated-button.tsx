@@ -1,8 +1,8 @@
 "use client";
-import { motion } from "framer-motion";
+import { motion, HTMLMotionProps } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-interface AnimatedButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface AnimatedButtonProps extends Omit<HTMLMotionProps<"button">, "children"> {
   children: React.ReactNode;
   className?: string;
   delay?: number;
