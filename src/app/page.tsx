@@ -13,10 +13,16 @@ export default function HomePage() {
         {/* Animated background grid */}
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
         
-        {/* Animated circles */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute left-1/2 -translate-x-1/2 top-1/3 w-[40rem] h-[40rem] bg-primary/20 rounded-full filter blur-[100px] opacity-50 animate-pulse" />
-          <div className="absolute -right-4 bottom-1/4 w-72 h-72 bg-secondary/20 rounded-full filter blur-[80px] opacity-40 animate-pulse delay-1000" />
+        {/* Animated lamp light */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div 
+            className="absolute left-1/2 -translate-x-1/2 top-[40%] -translate-y-1/2 w-[50rem] h-[50rem] bg-primary/30 rounded-full"
+            style={{
+              filter: 'blur(120px)',
+              animation: 'pulse 4s infinite',
+              opacity: '0.6'
+            }}
+          />
         </div>
 
         <div className="container mx-auto px-4 text-center relative z-10">
@@ -117,23 +123,6 @@ export default function HomePage() {
       {/* CTA Section with Gradient */}
       <section className="relative py-32 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/20 via-primary/10 to-background" />
-        
-        {/* Large Branded Text - Positioned as background */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 0.1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1 }}
-          className="absolute inset-0 flex items-center justify-center pointer-events-none"
-        >
-          <div className="w-full overflow-hidden">
-            <h1 className="text-[8rem] md:text-[15rem] font-bold tracking-tighter text-white/10 select-none text-center whitespace-nowrap"
-                style={{ letterSpacing: '-0.05em' }}>
-              ASSUREDGIG
-            </h1>
-          </div>
-        </motion.div>
-
         <div className="container mx-auto px-4 text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -154,6 +143,21 @@ export default function HomePage() {
             </Button>
           </motion.div>
         </div>
+      </section>
+
+      {/* Large Branded Text Section - Separate section after CTA */}
+      <section className="py-20 overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 0.15, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1 }}
+        >
+          <h1 className="text-[8rem] md:text-[15rem] font-bold tracking-tighter text-white select-none text-center whitespace-nowrap"
+              style={{ letterSpacing: '-0.05em' }}>
+            ASSUREDGIG
+          </h1>
+        </motion.div>
       </section>
     </div>
   );
