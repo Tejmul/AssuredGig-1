@@ -32,25 +32,28 @@ model User {
   reviewsReceived Review[]  @relation("RevieweeReviews")
   messages      Message[]
   resume          Resume?
+  payments       Payment[]
 }
 
 model Job {
-  id          String    @id @default(uuid())
+  id          String    @id @default(cuid())
   title       String
   description String    @db.Text
   budget      Float
   deadline    DateTime?
-  skills      Json?
-  status      JobStatus @default(OPEN)
+  skills      Json      // Store skills as JSON array
   isPremium   Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relations
+  status      String    @default("open") // open, in-progress, completed, cancelled
   clientId    String
   client      User      @relation("ClientJobs", fields: [clientId], references: [id])
   proposals   Proposal[]
   contract    Contract?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([clientId])
+  @@index([status])
+  @@index([isPremium])
 }
 
 model Proposal {
@@ -89,6 +92,7 @@ model Contract {
   reviews     Review[]
   proposalId    String   @unique
   proposal      Proposal @relation(fields: [proposalId], references: [id])
+  payments     Payment[]
 }
 
 model Milestone {
@@ -147,6 +151,25 @@ model Resume {
   user          User      @relation(fields: [userId], references: [id])
 }
 
+model Payment {
+  id          String    @id @default(uuid())
+  contractId  String
+  clientId    String
+  amount      Float
+  orderId     String    @unique
+  paymentId   String?
+  status      PaymentStatus @default(PENDING)
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  // Relations
+  contract    Contract  @relation(fields: [contractId], references: [id])
+  client      User      @relation(fields: [clientId], references: [id])
+
+  @@index([contractId])
+  @@index([clientId])
+}
+
 enum Role {
   ADMIN
   CLIENT
@@ -174,4 +197,11 @@ enum ContractStatus {
 enum MilestoneStatus {
   PENDING
   COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
 } 

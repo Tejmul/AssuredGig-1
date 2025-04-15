@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth.config"
 import { z } from "zod"
 import type { Session } from "next-auth"
 import { ProposalStatus } from "@prisma/client"
+import { db } from "@/lib/db"
 
 interface Session {
   user: {
@@ -208,5 +209,198 @@ export async function POST(req: Request) {
     return NextResponse.json(proposal, { status: 201 });
   } catch (error) {
     return handleApiError(error);
+  }
+}
+
+export async function POST_OLD(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // Check if user is a freelancer
+    if (session.user.role !== "FREELANCER") {
+      return NextResponse.json(
+        { error: "Only freelancers can submit proposals" },
+        { status: 403 }
+      );
+    }
+    
+    const body = await request.json();
+    const data = proposalSchema.parse(body);
+    
+    // Check if job exists and is open
+    const job = await db.job.findUnique({
+      where: { id: data.jobId },
+    });
+    
+    if (!job) {
+      return NextResponse.json(
+        { error: "Job not found" },
+        { status: 404 }
+      );
+    }
+    
+    if (job.status !== "open") {
+      return NextResponse.json(
+        { error: "This job is no longer accepting proposals" },
+        { status: 400 }
+      );
+    }
+    
+    // Check if freelancer has already submitted a proposal
+    const existingProposal = await db.proposal.findFirst({
+      where: {
+        jobId: data.jobId,
+        freelancerId: session.user.id,
+      },
+    });
+    
+    if (existingProposal) {
+      return NextResponse.json(
+        { error: "You have already submitted a proposal for this job" },
+        { status: 400 }
+      );
+    }
+    
+    // Create the proposal
+    const proposal = await db.proposal.create({
+      data: {
+        ...data,
+        freelancerId: session.user.id,
+      },
+      include: {
+        freelancer: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        },
+        job: {
+          select: {
+            id: true,
+            title: true,
+            client: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    
+    return NextResponse.json(proposal, { status: 201 });
+  } catch (error) {
+    console.error("Error creating proposal:", error);
+    
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Invalid request data", details: error.errors },
+        { status: 400 }
+      );
+    }
+    
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET_OLD(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+    
+    const { searchParams } = new URL(request.url);
+    const jobId = searchParams.get("jobId");
+    
+    // If jobId is provided, get proposals for that job
+    if (jobId) {
+      const job = await db.job.findUnique({
+        where: { id: jobId },
+      });
+      
+      if (!job) {
+        return NextResponse.json(
+          { error: "Job not found" },
+          { status: 404 }
+        );
+      }
+      
+      // Only job owner can view proposals
+      if (job.clientId !== session.user.id) {
+        return NextResponse.json(
+          { error: "Unauthorized" },
+          { status: 403 }
+        );
+      }
+      
+      const proposals = await db.proposal.findMany({
+        where: { jobId },
+        include: {
+          freelancer: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+              skills: true,
+              portfolio: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+      
+      return NextResponse.json(proposals);
+    }
+    
+    // Otherwise, get user's proposals
+    const proposals = await db.proposal.findMany({
+      where: {
+        freelancerId: session.user.id,
+      },
+      include: {
+        job: {
+          select: {
+            id: true,
+            title: true,
+            client: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    
+    return NextResponse.json(proposals);
+  } catch (error) {
+    console.error("Error fetching proposals:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 } 
