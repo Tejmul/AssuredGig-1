@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth.config"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/db"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -20,7 +20,7 @@ export default async function ProposalsPage() {
   const isClient = session.user.role === "CLIENT"
 
   // Fetch proposals based on user role
-  const proposals = await prisma.proposal.findMany({
+  const proposals = await db.proposal.findMany({
     where: isClient
       ? { job: { clientId: userId } }
       : { freelancerId: userId },

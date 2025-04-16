@@ -9,8 +9,9 @@ import { User as PrismaUser } from "@prisma/client";
 // Define the UserRole type if not available from Prisma
 export type UserRole = "CLIENT" | "FREELANCER" | "ADMIN";
 
+// Interface for user with password
 interface UserWithPassword extends PrismaUser {
-  password: string;
+  password: string | null;
 }
 
 declare module "next-auth" {
@@ -45,8 +46,8 @@ export const authOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
-    signIn: "/login",
-    error: "/auth/error",
+    signIn: "/auth/signin",
+    error: "/auth/signin?error=AuthenticationFailed",
     signOut: "/",
   },
   callbacks: {
@@ -88,11 +89,11 @@ export const authOptions = {
           }
 
           const user = await db.user.findUnique({
-            where: { email: credentials.email }
+            where: { email: credentials.email.toLowerCase() }
           }) as UserWithPassword | null;
 
           if (!user || !user.password) {
-            throw new Error("User not found");
+            throw new Error("Invalid email or password");
           }
 
           const passwordsMatch = await bcrypt.compare(
@@ -101,11 +102,14 @@ export const authOptions = {
           );
 
           if (!passwordsMatch) {
-            throw new Error("Invalid password");
+            throw new Error("Invalid email or password");
           }
 
+          // Remove sensitive data from response
           const { password: _, ...userWithoutPassword } = user;
-          return userWithoutPassword;
+          
+          // Return the user object with the correct type
+          return userWithoutPassword as any;
         } catch (error) {
           console.error("Authorization error:", error);
           return null;

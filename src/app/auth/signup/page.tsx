@@ -102,7 +102,7 @@ export default function SignUpPage() {
           email: formData.get("email"),
           password: formData.get("password"),
           name: formData.get("name"),
-          role: selectedRole,
+          role: selectedRole.toUpperCase(),
         }),
       })
 
@@ -116,7 +116,7 @@ export default function SignUpPage() {
       event.currentTarget.reset()
 
       // Redirect to signin page after successful registration
-      router.push("/auth/signin")
+      router.push("/auth/signin?registered=true")
     } catch (error) {
       setError(error instanceof Error ? error.message : "Something went wrong")
     } finally {

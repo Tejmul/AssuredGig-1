@@ -8,7 +8,18 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ req, token }) => {
-        return true; // Allow all requests for now, you can customize this based on your needs
+        // Protect API routes
+        if (req.nextUrl.pathname.startsWith("/api/")) {
+          return !!token;
+        }
+        
+        // Protect dashboard and settings routes
+        if (req.nextUrl.pathname.startsWith("/dashboard") || 
+            req.nextUrl.pathname.startsWith("/settings")) {
+          return !!token;
+        }
+        
+        return true;
       },
     },
   }
@@ -17,8 +28,9 @@ export default withAuth(
 // Specify which routes should be protected
 export const config = {
   matcher: [
-    "/api/auth/:path*",
+    "/api/:path*",
     "/dashboard/:path*",
     "/settings/:path*",
+    "/contracts/:path*",
   ],
 }; 

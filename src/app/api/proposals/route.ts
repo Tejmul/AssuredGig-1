@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { Session } from "next-auth"
 import { authOptions } from "@/lib/auth.config"
@@ -65,8 +64,8 @@ export async function GET(req: Request) {
 
     // Get total count and proposals in parallel
     const [total, proposals] = await Promise.all([
-      prisma.proposal.count({ where }),
-      prisma.proposal.findMany({
+      db.proposal.count({ where }),
+      db.proposal.findMany({
         where,
         include: {
           job: {
@@ -134,11 +133,11 @@ export async function POST(req: Request) {
 
     // Run validations in parallel
     const [job, existingProposal] = await Promise.all([
-      prisma.job.findUnique({
+      db.job.findUnique({
         where: { id: data.jobId },
         select: { status: true },
       }),
-      prisma.proposal.findFirst({
+      db.proposal.findFirst({
         where: {
           jobId: data.jobId,
           freelancerId: session.user.id,
@@ -167,7 +166,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const proposal = await prisma.proposal.create({
+    const proposal = await db.proposal.create({
       data: {
         ...data,
         freelancerId: session.user.id,

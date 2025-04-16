@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth.config"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/db"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { 
@@ -35,25 +35,25 @@ export default async function DashboardPage() {
     recentContracts
   ] = await Promise.all([
     // Count jobs (posted or applied)
-    prisma.job.count({
+    db.job.count({
       where: isClient 
         ? { clientId: userId } 
         : { proposals: { some: { freelancerId: userId } } }
     }),
     // Count proposals (sent or received)
-    prisma.proposal.count({
+    db.proposal.count({
       where: isClient 
         ? { job: { clientId: userId } } 
         : { freelancerId: userId }
     }),
     // Count contracts
-    prisma.contract.count({
+    db.contract.count({
       where: isClient 
         ? { clientId: userId } 
         : { freelancerId: userId }
     }),
     // Count unread messages
-    prisma.message.count({
+    db.message.count({
       where: {
         contract: {
           OR: [
@@ -66,7 +66,7 @@ export default async function DashboardPage() {
     }),
     // Recent jobs
     isClient 
-      ? prisma.job.findMany({
+      ? db.job.findMany({
           where: { clientId: userId },
           orderBy: { createdAt: "desc" },
           take: 5,
@@ -74,7 +74,7 @@ export default async function DashboardPage() {
             proposals: true
           }
         })
-      : prisma.job.findMany({
+      : db.job.findMany({
           where: { proposals: { some: { freelancerId: userId } } },
           orderBy: { createdAt: "desc" },
           take: 5,
@@ -86,7 +86,7 @@ export default async function DashboardPage() {
         }),
     // Recent proposals
     isClient
-      ? prisma.proposal.findMany({
+      ? db.proposal.findMany({
           where: { job: { clientId: userId } },
           orderBy: { createdAt: "desc" },
           take: 5,
@@ -95,7 +95,7 @@ export default async function DashboardPage() {
             job: true
           }
         })
-      : prisma.proposal.findMany({
+      : db.proposal.findMany({
           where: { freelancerId: userId },
           orderBy: { createdAt: "desc" },
           take: 5,
@@ -104,7 +104,7 @@ export default async function DashboardPage() {
           }
         }),
     // Recent contracts
-    prisma.contract.findMany({
+    db.contract.findMany({
       where: isClient 
         ? { clientId: userId } 
         : { freelancerId: userId },

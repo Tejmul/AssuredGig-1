@@ -5,6 +5,8 @@ import CredentialsProvider from "next-auth/providers/credentials"
 
 import { db } from "@/lib/db"
 
+export type UserRole = "CLIENT" | "FREELANCER"
+
 export async function hashPassword(password: string) {
   return await hash(password, 12)
 }
@@ -50,21 +52,21 @@ export const authOptions: NextAuthOptions = {
       name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials");
+          return null;
         }
 
         const user = await db.user.findUnique({
           where: {
-            email: credentials.email
-          }
+            email: credentials.email,
+          },
         });
 
-        if (!user || !user.password) {
-          throw new Error("User not found");
+        if (!user) {
+          return null;
         }
 
         const isPasswordValid = await compare(
@@ -73,7 +75,7 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isPasswordValid) {
-          throw new Error("Invalid password");
+          return null;
         }
 
         return {
@@ -82,25 +84,39 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           role: user.role,
         };
-      }
+      },
     }),
   ],
   callbacks: {
     async session({ token, session }) {
       if (token) {
-        session.user.id = token.id as string
-        session.user.name = token.name
-        session.user.email = token.email
-        session.user.role = token.role as string
+        session.user.id = token.id;
+        session.user.name = token.name;
+        session.user.email = token.email;
+        session.user.role = token.role;
       }
-      return session
+      return session;
     },
     async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id
-        token.role = user.role
+      const dbUser = await db.user.findFirst({
+        where: {
+          email: token.email,
+        },
+      });
+
+      if (!dbUser) {
+        if (user) {
+          token.id = user?.id;
+        }
+        return token;
       }
-      return token
+
+      return {
+        id: dbUser.id,
+        name: dbUser.name,
+        email: dbUser.email,
+        role: dbUser.role,
+      };
     },
   },
   debug: process.env.NODE_ENV === "development",

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +30,8 @@ interface Contract {
 }
 
 export default function ContractsPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,24 +39,47 @@ export default function ContractsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
-    const fetchContracts = async () => {
-      try {
-        const response = await fetch("/api/contracts");
-        if (!response.ok) {
-          throw new Error("Failed to fetch contracts");
-        }
-        const data = await response.json();
-        setContracts(data);
-        setIsLoading(false);
-      } catch (err) {
-        console.error("Error fetching contracts:", err);
-        setError("Failed to load contracts");
-        setIsLoading(false);
-      }
-    };
+    // Redirect to signin if not authenticated
+    if (status === "unauthenticated") {
+      router.push("/auth/signin");
+      return;
+    }
 
-    fetchContracts();
-  }, []);
+    // Only fetch contracts if authenticated
+    if (status === "authenticated") {
+      const fetchContracts = async () => {
+        try {
+          const response = await fetch("/api/contracts");
+          if (!response.ok) {
+            throw new Error("Failed to fetch contracts");
+          }
+          const data = await response.json();
+          setContracts(data);
+          setIsLoading(false);
+        } catch (err) {
+          console.error("Error fetching contracts:", err);
+          setError("Failed to load contracts");
+          setIsLoading(false);
+        }
+      };
+
+      fetchContracts();
+    }
+  }, [status, router]);
+
+  // Show loading state while checking authentication
+  if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Don't render anything if not authenticated (will redirect)
+  if (status === "unauthenticated") {
+    return null;
+  }
 
   const filteredContracts = contracts.filter(contract => {
     const matchesSearch = contract.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

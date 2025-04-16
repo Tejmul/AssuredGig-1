@@ -1,9 +1,11 @@
 import {
   AlertTriangle,
   ArrowRight,
+  Briefcase,
   Check,
   ChevronLeft,
   ChevronRight,
+  Code,
   Command,
   CreditCard,
   File,
@@ -54,6 +56,8 @@ export const Icons = {
   gitHub: Github,
   twitter: Twitter,
   check: Check,
+  briefcase: Briefcase,
+  code: Code,
   google: ({ ...props }: LucideProps) => (
     <svg
       aria-hidden="true"
@@ -71,4 +75,6 @@ export const Icons = {
       ></path>
     </svg>
   ),
-} 
+} as const
+
+export type IconKeys = keyof typeof Icons 
