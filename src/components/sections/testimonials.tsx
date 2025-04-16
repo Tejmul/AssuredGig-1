@@ -4,6 +4,7 @@ import * as React from "react"
 import { motion } from "framer-motion"
 import { GlassCard } from "@/components/ui/glass-card"
 import { NeonText } from "@/components/ui/neon-text"
+import Image from "next/image"
 
 const testimonials = [
   {
@@ -129,11 +130,15 @@ export function Testimonials() {
                 <div className="flex items-center mb-4">
                   <div className="relative mr-4">
                     <div className={`w-12 h-12 rounded-full overflow-hidden border-2 border-${testimonial.color}-500/30`}>
-                      <img
-                        src={testimonial.avatar}
-                        alt={testimonial.name}
-                        className="w-full h-full object-cover"
-                      />
+                      <div className="relative h-12 w-12 rounded-full overflow-hidden">
+                        <Image
+                          src={testimonial.avatar}
+                          alt={testimonial.name}
+                          width={48}
+                          height={48}
+                          className="object-cover"
+                        />
+                      </div>
                     </div>
                     <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-${testimonial.color}-500 border-2 border-black`} />
                   </div>
@@ -148,7 +153,7 @@ export function Testimonials() {
                 </div>
                 
                 <blockquote className="text-gray-300 italic flex-grow">
-                  "{testimonial.quote}"
+                  &ldquo;{testimonial.quote}&rdquo;
                 </blockquote>
                 
                 <div className="mt-4 pt-4 border-t border-white/10">

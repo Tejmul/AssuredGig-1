@@ -10,175 +10,137 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  CLIENT
+  FREELANCER
+  ADMIN
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
 model User {
-  id            String    @id @default(uuid())
-  name          String
-  email         String    @unique
-  password      String
-  role          Role      @default(CLIENT)
-  bio           String?   @db.Text
-  skills        Json?
-  portfolio     Json?
-  rate          Float?
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          UserRole  @default(CLIENT)
+  accounts      Account[]
+  sessions      Session[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  // Profile details
+  bio           String?   @db.Text
+  skills        String?   @db.Text // JSON array of skills
+  hourlyRate    Float?
+  
   // Relations
-  jobsPosted    Job[]         @relation("ClientJobs")
-  proposals     Proposal[]    @relation("FreelancerProposals")
-  contracts     Contract[]    @relation("FreelancerContracts")
-  clientContracts Contract[]  @relation("ClientContracts")
-  reviewsGiven    Review[]  @relation("ReviewerReviews")
-  reviewsReceived Review[]  @relation("RevieweeReviews")
-  messages      Message[]
-  resume          Resume?
-  payments       Payment[]
+  postedGigs     Gig[]        @relation("ClientGigs")
+  portfolios     Portfolio[]
+  proposals      Proposal[]
+  sentMessages   Message[]     @relation("SentMessages")
+  receivedMessages Message[]   @relation("ReceivedMessages")
+  meetings       Meeting[]
+  payments       Payment[]     @relation("UserPayments")
+  receivedPayments Payment[]   @relation("FreelancerPayments")
 }
 
-model Job {
-  id          String    @id @default(cuid())
+model Gig {
+  id          String   @id @default(cuid())
   title       String
-  description String    @db.Text
+  description String   @db.Text
   budget      Float
-  deadline    DateTime?
-  skills      Json      // Store skills as JSON array
-  isPremium   Boolean   @default(false)
-  status      String    @default("open") // open, in-progress, completed, cancelled
+  timeline    String   // e.g., "5 days", "2 weeks"
+  skills      String   @db.Text // JSON array of required skills
+  status      GigStatus @default(OPEN)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
   clientId    String
-  client      User      @relation("ClientJobs", fields: [clientId], references: [id])
-  proposals   Proposal[]
-  contract    Contract?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  client      User     @relation("ClientGigs", fields: [clientId], references: [id])
+  proposals   Proposal[] @relation("GigProposals")
+  selectedProposalId String? @unique
+  selectedProposal   Proposal? @relation(fields: [selectedProposalId], references: [id])
+  progress    Progress[]
 
   @@index([clientId])
-  @@index([status])
-  @@index([isPremium])
+}
+
+enum GigStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Portfolio {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  images      String   @db.Text // JSON array of image URLs
+  category    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  proposals   Proposal[]
+
+  @@index([userId])
 }
 
 model Proposal {
-  id            String   @id @default(cuid())
-  jobId         String
-  freelancerId  String
-  coverLetter   String
-  bidAmount     Float
-  status        ProposalStatus @default(PENDING)
-  feedback      String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  job           Job      @relation(fields: [jobId], references: [id])
-  freelancer    User     @relation("FreelancerProposals", fields: [freelancerId], references: [id])
-  contract      Contract?
-
-  @@index([jobId])
-  @@index([freelancerId])
-}
-
-model Contract {
-  id          String    @id @default(uuid())
-  status      ContractStatus @default(PENDING)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id          String   @id @default(cuid())
+  coverLetter String   @db.Text
+  timeline    String
+  price       Float
+  status      ProposalStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
-  jobId       String    @unique
-  job         Job       @relation(fields: [jobId], references: [id])
-  freelancerId String
-  freelancer  User      @relation("FreelancerContracts", fields: [freelancerId], references: [id])
-  clientId    String
-  client      User      @relation("ClientContracts", fields: [clientId], references: [id])
-  milestones  Milestone[]
-  messages    Message[]
-  reviews     Review[]
-  proposalId    String   @unique
-  proposal      Proposal @relation(fields: [proposalId], references: [id])
-  payments     Payment[]
-}
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  gigId       String
+  gig         Gig      @relation("GigProposals", fields: [gigId], references: [id])
+  portfolioId String
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id])
+  selectedForGigs Gig[]
 
-model Milestone {
-  id          String    @id @default(uuid())
-  description String    @db.Text
-  amount      Float
-  status      MilestoneStatus @default(PENDING)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relations
-  contractId  String
-  contract    Contract  @relation(fields: [contractId], references: [id])
-}
-
-model Message {
-  id          String    @id @default(uuid())
-  content     String    @db.Text
-  createdAt   DateTime  @default(now())
-
-  // Relations
-  contractId  String
-  contract    Contract  @relation(fields: [contractId], references: [id])
-  senderId    String
-  sender      User      @relation(fields: [senderId], references: [id])
-}
-
-model Review {
-  id          String    @id @default(uuid())
-  rating      Int
-  comment     String?   @db.Text
-  createdAt   DateTime  @default(now())
-
-  // Relations
-  contractId  String
-  contract    Contract  @relation(fields: [contractId], references: [id])
-  reviewerId  String
-  reviewer    User      @relation("ReviewerReviews", fields: [reviewerId], references: [id])
-  revieweeId  String
-  reviewee    User      @relation("RevieweeReviews", fields: [revieweeId], references: [id])
-}
-
-model Resume {
-  id            String    @id @default(uuid())
-  userId        String    @unique
-  personalInfo  Json
-  summary       String    @db.Text
-  experience    Json
-  education     Json
-  skills        Json
-  certifications Json?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // Relations
-  user          User      @relation(fields: [userId], references: [id])
-}
-
-model Payment {
-  id          String    @id @default(uuid())
-  contractId  String
-  clientId    String
-  amount      Float
-  orderId     String    @unique
-  paymentId   String?
-  status      PaymentStatus @default(PENDING)
-  createdAt   DateTime  @default(now())
-  completedAt DateTime?
-
-  // Relations
-  contract    Contract  @relation(fields: [contractId], references: [id])
-  client      User      @relation(fields: [clientId], references: [id])
-
-  @@index([contractId])
-  @@index([clientId])
-}
-
-enum Role {
-  ADMIN
-  CLIENT
-  FREELANCER
-}
-
-enum JobStatus {
-  OPEN
-  CLOSED
+  @@index([userId])
+  @@index([gigId])
+  @@index([portfolioId])
 }
 
 enum ProposalStatus {
@@ -187,16 +149,69 @@ enum ProposalStatus {
   REJECTED
 }
 
-enum ContractStatus {
-  PENDING
-  ACTIVE
-  COMPLETED
-  CANCELLED
+model Meeting {
+  id          String   @id @default(cuid())
+  title       String
+  startTime   DateTime
+  endTime     DateTime
+  meetingUrl  String?
+  boardUrl    String?  // Excalidraw board URL
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }
 
-enum MilestoneStatus {
-  PENDING
-  COMPLETED
+model Message {
+  id          String   @id @default(cuid())
+  content     String   @db.Text
+  createdAt   DateTime @default(now())
+
+  // Relations
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId  String
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+model Progress {
+  id          String   @id @default(cuid())
+  description String   @db.Text
+  percentage  Int
+  files       String?  @db.Text // JSON array of file URLs
+  createdAt   DateTime @default(now())
+
+  // Relations
+  gigId       String
+  gig         Gig      @relation(fields: [gigId], references: [id])
+
+  @@index([gigId])
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  amount        Float
+  status        PaymentStatus @default(PENDING)
+  type          PaymentType
+  razorpayId    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  userId        String
+  user          User     @relation("UserPayments", fields: [userId], references: [id])
+  freelancerId  String
+  freelancer    User     @relation("FreelancerPayments", fields: [freelancerId], references: [id])
+
+  @@index([userId])
+  @@index([freelancerId])
 }
 
 enum PaymentStatus {
@@ -204,4 +219,18 @@ enum PaymentStatus {
   COMPLETED
   FAILED
   REFUNDED
+}
+
+enum PaymentType {
+  ADVANCE
+  FINAL
+  MILESTONE
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 } 

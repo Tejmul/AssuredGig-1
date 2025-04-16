@@ -4,8 +4,29 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, Clock, Users, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function HomePage() {
+  const { data: session } = useSession();
+  const router = useRouter();
+
+  const handlePostJob = () => {
+    if (!session) {
+      router.push('/auth/signin?callbackUrl=/hire&role=client');
+      return;
+    }
+    router.push('/hire');
+  };
+
+  const handleFindWork = () => {
+    if (!session) {
+      router.push('/auth/signin?callbackUrl=/jobs&role=freelancer');
+      return;
+    }
+    router.push('/jobs');
+  };
+
   return (
     <div className="flex flex-col">
       {/* Hero Section with Gradient Background */}
@@ -37,7 +58,7 @@ export default function HomePage() {
               <span className="text-primary relative z-10">Freelancing</span>
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto">
-              Connect with top talent and opportunities in our premium freelance marketplace
+              Connect with top talent and opportunities in our premium freelance marketplace. Be a client, freelancer, or both - the choice is yours.
             </p>
           </motion.div>
 
@@ -47,12 +68,21 @@ export default function HomePage() {
             transition={{ delay: 0.3, duration: 0.8 }}
             className="flex flex-col sm:flex-row gap-6 justify-center mb-16"
           >
-            <Button size="lg" className="text-lg px-8 py-6 bg-primary hover:bg-primary/90">
-              Get Started
+            <Button 
+              size="lg" 
+              className="text-lg px-8 py-6 bg-primary hover:bg-primary/90"
+              onClick={handlePostJob}
+            >
+              Post a Job
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8 py-6">
-              Browse Jobs
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="text-lg px-8 py-6"
+              onClick={handleFindWork}
+            >
+              Find Work
             </Button>
           </motion.div>
 

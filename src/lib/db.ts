@@ -1,9 +1,17 @@
 import { PrismaClient } from "@prisma/client";
 
 declare global {
-  var prisma: PrismaClient | undefined;
+  var cachedPrisma: PrismaClient;
 }
 
-export const db = globalThis.prisma || new PrismaClient();
+export let db: PrismaClient;
+if (process.env.NODE_ENV === "production") {
+  db = new PrismaClient();
+} else {
+  if (!global.cachedPrisma) {
+    global.cachedPrisma = new PrismaClient();
+  }
+  db = global.cachedPrisma;
+}
 
 if (process.env.NODE_ENV !== "production") globalThis.prisma = db; 

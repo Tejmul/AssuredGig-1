@@ -92,6 +92,9 @@ export default async function AcceptProposalPage({ params }: AcceptProposalPageP
                 specified bid amount. A contract will be created automatically, and
                 the job status will be updated to "In Progress".
               </p>
+              <p className="text-muted-foreground">
+                &ldquo;{proposal.coverLetter}&rdquo;
+              </p>
             </div>
 
             <form action={`/api/proposals/${params.id}`} method="PATCH" className="space-y-4">

@@ -12,6 +12,7 @@ import {
   AlertCircle
 } from "lucide-react"
 import Link from "next/link"
+import { UserRole } from "@/lib/auth.config"
 
 interface Contract {
   id: string
@@ -36,7 +37,7 @@ interface Contract {
 
 interface ActiveContractsProps {
   contracts: Contract[]
-  userRole: string
+  userRole: UserRole
 }
 
 export default function ActiveContracts({ contracts, userRole }: ActiveContractsProps) {

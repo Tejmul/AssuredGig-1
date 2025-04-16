@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getServerSession } from "next-auth"
-import type { Session as NextAuthSession } from "next-auth"
+import { Session } from "next-auth"
 import { authOptions } from "@/lib/auth.config"
 import { z } from "zod"
 import { JobStatus, ProposalStatus, Prisma } from "@prisma/client"
@@ -15,17 +15,6 @@ const updateJobSchema = z.object({
   status: z.enum(["OPEN", "CLOSED"]).optional(),
   isPremium: z.boolean().optional(),
 })
-
-interface Session extends NextAuthSession {
-  user: {
-    id: string;
-    name: string | null;
-    email: string | null;
-    role: JobStatus;
-    isTwoFactorEnabled: boolean;
-    isOAuth: boolean;
-  };
-}
 
 type FreelancerSelect = {
   id: string

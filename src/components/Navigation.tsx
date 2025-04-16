@@ -85,10 +85,10 @@ export function Navigation() {
               </DropdownMenu>
             ) : (
               <div className="flex items-center space-x-2">
-                <Link href="/login">
+                <Link href="/auth/signin">
                   <Button variant="ghost">Log in</Button>
                 </Link>
-                <Link href="/register">
+                <Link href="/auth/signup">
                   <Button>Sign up</Button>
                 </Link>
               </div>
@@ -164,12 +164,12 @@ export function Navigation() {
               </>
             ) : (
               <div className="space-y-2 pt-2">
-                <Link href="/login" onClick={closeMenu}>
+                <Link href="/auth/signin" onClick={closeMenu}>
                   <Button variant="ghost" className="w-full">
                     Log in
                   </Button>
                 </Link>
-                <Link href="/register" onClick={closeMenu}>
+                <Link href="/auth/signup" onClick={closeMenu}>
                   <Button className="w-full">
                     Sign up
                   </Button>

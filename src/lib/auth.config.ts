@@ -1,79 +1,117 @@
-import { NextAuthConfig } from "next-auth";
+import type { NextAuthOptions, Session } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/lib/db";
-import { Role } from "@prisma/client";
-import { getUserById } from "@/data/user";
 import bcrypt from "bcryptjs";
-import Credentials from "next-auth/providers/credentials";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { User as PrismaUser } from "@prisma/client";
 
-interface ExtendedToken {
-  id: string;
-  name: string | null;
-  email: string | null;
-  role: Role;
+// Define the UserRole type if not available from Prisma
+export type UserRole = "CLIENT" | "FREELANCER" | "ADMIN";
+
+interface UserWithPassword extends PrismaUser {
+  password: string;
 }
 
-interface ExtendedSession {
-  user: {
-    id: string;
-    name: string | null;
-    email: string | null;
-    role: Role;
-  };
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      name: string | null;
+      email: string | null;
+      image: string | null;
+      role: UserRole;
+      isTwoFactorEnabled: boolean;
+      isOAuth: boolean;
+    };
+  }
+
+  interface User extends PrismaUser {
+    role: UserRole;
+  }
 }
 
-export const authOptions: NextAuthConfig = {
+declare module "next-auth/jwt" {
+  interface JWT {
+    role: UserRole;
+  }
+}
+
+export const authOptions = {
+  // @ts-ignore - Type mismatch between next-auth and @auth/prisma-adapter is a known issue
   adapter: PrismaAdapter(db),
-  session: { strategy: "jwt" },
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
   pages: {
     signIn: "/login",
     error: "/auth/error",
+    signOut: "/",
   },
   callbacks: {
-    async session({ token, session }) {
-      if (token) {
-        (session as ExtendedSession).user.id = (token as ExtendedToken).id;
-        (session as ExtendedSession).user.name = (token as ExtendedToken).name;
-        (session as ExtendedSession).user.email = (token as ExtendedToken).email;
-        (session as ExtendedSession).user.role = (token as ExtendedToken).role;
+    async session({ session, token }) {
+      if (token.sub && session.user) {
+        session.user.id = token.sub;
+        session.user.role = token.role as UserRole;
+        session.user.isTwoFactorEnabled = false;
+        session.user.isOAuth = false;
       }
       return session;
     },
-    async jwt({ token }) {
-      if (!token.sub) return token;
-
-      const existingUser = await getUserById(token.sub);
-
-      if (!existingUser) return token;
-
-      (token as ExtendedToken).id = existingUser.id;
-      (token as ExtendedToken).name = existingUser.name;
-      (token as ExtendedToken).email = existingUser.email;
-      (token as ExtendedToken).role = existingUser.role;
-
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+      }
       return token;
-    },
+    }
   },
   providers: [
-    Credentials({
+    CredentialsProvider({
+      name: "credentials",
+      credentials: {
+        email: { 
+          label: "Email", 
+          type: "email",
+          placeholder: "example@example.com"
+        },
+        password: { 
+          label: "Password", 
+          type: "password"
+        }
+      },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            throw new Error("Invalid credentials");
+          }
 
-        const user = await db.user.findUnique({
-          where: { email: credentials.email }
-        });
+          const user = await db.user.findUnique({
+            where: { email: credentials.email }
+          }) as UserWithPassword | null;
 
-        if (!user || !user.password) return null;
+          if (!user || !user.password) {
+            throw new Error("User not found");
+          }
 
-        const passwordsMatch = await bcrypt.compare(
-          credentials.password,
-          user.password,
-        );
+          const passwordsMatch = await bcrypt.compare(
+            credentials.password,
+            user.password
+          );
 
-        if (!passwordsMatch) return null;
+          if (!passwordsMatch) {
+            throw new Error("Invalid password");
+          }
 
-        return user;
+          const { password: _, ...userWithoutPassword } = user;
+          return userWithoutPassword;
+        } catch (error) {
+          console.error("Authorization error:", error);
+          return null;
+        }
       }
     })
   ],
-}; 
+  debug: process.env.NODE_ENV === "development"
+} satisfies NextAuthOptions; 
