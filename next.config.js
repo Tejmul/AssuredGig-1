@@ -18,7 +18,6 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
     scrollRestoration: true,
-    serverActions: true,
   },
   // Improve performance
   poweredByHeader: false,
@@ -32,13 +31,20 @@ const nextConfig = {
   },
   // Handle dependency conflicts
   webpack: (config, { isServer }) => {
-    // Add resolve fallback for node modules
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
         net: false,
         tls: false,
+        child_process: false,
+        async_hooks: false,
+        crypto: require.resolve('crypto-browserify'),
+        stream: require.resolve('stream-browserify'),
+        http: require.resolve('stream-http'),
+        https: require.resolve('https-browserify'),
+        os: require.resolve('os-browserify'),
+        path: require.resolve('path-browserify'),
       };
     }
     return config;

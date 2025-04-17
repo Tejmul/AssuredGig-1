@@ -2,11 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2023-10-16",
-});
+import { createOrder } from "@/lib/razorpay";
 
 export async function POST(
   req: Request,
@@ -18,7 +14,7 @@ export async function POST(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { amount, currency = "usd" } = await req.json();
+    const { amount, currency = "INR" } = await req.json();
 
     // Validate contract exists and user has access
     const contract = await db.contract.findUnique({
@@ -37,16 +33,8 @@ export async function POST(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Create Stripe payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
-      currency,
-      metadata: {
-        contractId: contract.id,
-        clientId: contract.clientId,
-        freelancerId: contract.freelancerId,
-      },
-    });
+    // Create Razorpay order
+    const order = await createOrder(amount, currency);
 
     // Create payment record
     const payment = await db.payment.create({
@@ -57,13 +45,14 @@ export async function POST(
         contractId: contract.id,
         clientId: contract.clientId,
         freelancerId: contract.freelancerId,
-        stripePaymentIntentId: paymentIntent.id,
+        razorpayOrderId: order.id,
       },
     });
 
     return NextResponse.json({
-      clientSecret: paymentIntent.client_secret,
+      orderId: order.id,
       paymentId: payment.id,
+      keyId: process.env.RAZORPAY_KEY_ID,
     });
   } catch (error) {
     console.error("[PAYMENT_POST]", error);
@@ -98,8 +87,12 @@ export async function GET(
     }
 
     const payments = await db.payment.findMany({
-      where: { contractId: params.contractId },
-      orderBy: { createdAt: "desc" },
+      where: {
+        contractId: contract.id,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
     });
 
     return NextResponse.json(payments);

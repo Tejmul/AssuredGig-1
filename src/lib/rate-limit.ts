@@ -1,4 +1,4 @@
-import { LRUCache } from 'lru-cache'
+import lruCache from 'lru-cache'
 
 type Options = {
   uniqueTokenPerInterval?: number
@@ -6,9 +6,11 @@ type Options = {
 }
 
 export function rateLimit(options?: Options) {
-  const tokenCache = new LRUCache({
+  const tokenCache = new lruCache({
     max: options?.uniqueTokenPerInterval || 500,
     ttl: options?.interval || 60000,
+    updateAgeOnGet: true,
+    allowStale: false
   })
 
   return {

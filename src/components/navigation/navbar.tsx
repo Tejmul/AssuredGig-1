@@ -81,7 +81,7 @@ export function Navbar() {
           <div className="flex items-center space-x-4">
             <div className="hidden md:flex items-center space-x-4">
               <Button variant="default" size="sm" glow="cyan" asChild>
-                <Link href="/signup">Sign Up</Link>
+                <Link href="/auth/signup">Sign Up</Link>
               </Button>
             </div>
             

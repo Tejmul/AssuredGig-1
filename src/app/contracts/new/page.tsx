@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,10 +26,11 @@ export default function NewContractPage() {
   const [isLoadingFreelancers, setIsLoadingFreelancers] = useState(true);
 
   // Fetch freelancers on component mount
-  useState(() => {
+  useEffect(() => {
     const fetchFreelancers = async () => {
       try {
-        const response = await fetch("/api/users?role=FREELANCER");
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
+        const response = await fetch(`${baseUrl}/api/users?role=FREELANCER`);
         if (!response.ok) {
           throw new Error("Failed to fetch freelancers");
         }
@@ -44,7 +45,7 @@ export default function NewContractPage() {
     };
 
     fetchFreelancers();
-  });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +54,8 @@ export default function NewContractPage() {
     
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/contracts", {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
+      const response = await fetch(`${baseUrl}/api/contracts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

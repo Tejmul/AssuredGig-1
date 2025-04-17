@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export default function AuthErrorPage() {
   const searchParams = useSearchParams();
@@ -19,7 +21,7 @@ export default function AuthErrorPage() {
 
     // If no real error, redirect to login
     if (!error || error === "undefined") {
-      router.push("/login");
+      router.push("/auth/signin");
     }
   }, [error, callbackUrl, router]);
 
@@ -53,29 +55,28 @@ export default function AuthErrorPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-6 shadow-lg">
-        <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
-            {error && error !== "undefined" ? "Authentication Error" : "Redirecting..."}
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
+    <div className="container flex h-screen w-screen flex-col items-center justify-center">
+      <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+        <div className="flex flex-col space-y-2 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Authentication Error
+          </h1>
+          <p className="text-sm text-muted-foreground">
             {getErrorMessage(error)}
           </p>
         </div>
-
-        <div className="mt-8 space-y-4">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {getErrorMessage(error)}
+          </AlertDescription>
+        </Alert>
+        <div className="flex flex-col space-y-2 text-center">
           <Link
-            href="/login"
-            className="flex w-full justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            href="/auth/signin"
+            className="text-sm text-primary hover:underline"
           >
-            Back to Login
-          </Link>
-          <Link
-            href="/"
-            className="flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-          >
-            Go to Home
+            Return to Sign In
           </Link>
         </div>
       </div>

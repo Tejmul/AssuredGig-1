@@ -73,6 +73,8 @@ model User {
   meetings       Meeting[]
   payments       Payment[]     @relation("UserPayments")
   receivedPayments Payment[]   @relation("FreelancerPayments")
+  clientContracts Contract[]   @relation("ClientContracts")
+  freelancerContracts Contract[] @relation("FreelancerContracts")
 }
 
 model Gig {
@@ -199,19 +201,26 @@ model Progress {
 model Payment {
   id            String   @id @default(cuid())
   amount        Float
+  currency      String   @default("INR")
   status        PaymentStatus @default(PENDING)
-  type          PaymentType
-  razorpayId    String?
+  type          PaymentType @default(ESCROW)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  // Razorpay fields (nullable)
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+
   // Relations
-  userId        String
-  user          User     @relation("UserPayments", fields: [userId], references: [id])
+  contractId    String
+  contract      Contract @relation(fields: [contractId], references: [id])
+  clientId      String
+  client        User     @relation("UserPayments", fields: [clientId], references: [id])
   freelancerId  String
   freelancer    User     @relation("FreelancerPayments", fields: [freelancerId], references: [id])
 
-  @@index([userId])
+  @@index([contractId])
+  @@index([clientId])
   @@index([freelancerId])
 }
 
@@ -226,6 +235,7 @@ enum PaymentType {
   ADVANCE
   FINAL
   MILESTONE
+  ESCROW
 }
 
 model VerificationToken {
@@ -234,4 +244,32 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Contract {
+  id            String   @id @default(cuid())
+  title         String
+  description   String   @db.Text
+  amount        Float
+  status        ContractStatus @default(DRAFT)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  clientId      String
+  client        User     @relation("ClientContracts", fields: [clientId], references: [id])
+  freelancerId  String
+  freelancer    User     @relation("FreelancerContracts", fields: [freelancerId], references: [id])
+  payments      Payment[]
+
+  @@index([clientId])
+  @@index([freelancerId])
+}
+
+enum ContractStatus {
+  DRAFT
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
 } 

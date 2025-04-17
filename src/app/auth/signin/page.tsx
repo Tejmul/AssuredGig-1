@@ -6,18 +6,20 @@ import { useSearchParams } from "next/navigation"
 import { useState } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Icons } from "@/components/icons"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 
 export default function SignInPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl") || "/"
-  const role = searchParams.get("role") || "freelancer"
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -39,12 +41,16 @@ export default function SignInPage() {
 
       if (result?.error) {
         setError(result.error)
+        toast.error(result.error)
         return
       }
 
+      toast.success("Signed in successfully!")
       router.push(callbackUrl)
     } catch (error) {
-      setError("An error occurred. Please try again.")
+      const errorMessage = error instanceof Error ? error.message : "An error occurred. Please try again."
+      setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -83,6 +89,12 @@ export default function SignInPage() {
               Enter your email to sign in to your account
             </p>
           </div>
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <div className="grid gap-6">
             <form onSubmit={onSubmit}>
               <div className="grid gap-4">
@@ -111,25 +123,27 @@ export default function SignInPage() {
                     required
                   />
                 </div>
-                {error && (
-                  <div className="text-sm text-red-500">
-                    {error}
-                  </div>
-                )}
                 <Button
                   type="submit"
                   disabled={isLoading}
                 >
-                  {isLoading && (
-                    <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                  {isLoading ? (
+                    <>
+                      <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    "Sign in"
                   )}
-                  Sign In
                 </Button>
               </div>
             </form>
           </div>
           <p className="px-8 text-center text-sm text-muted-foreground">
-            Don&apos;t have an account? <Link href="/signup" className="text-primary hover:underline">Sign up</Link>
+            Don&apos;t have an account?{" "}
+            <Link href="/auth/signup" className="underline underline-offset-4 hover:text-primary">
+              Sign up
+            </Link>
           </p>
         </div>
       </div>
