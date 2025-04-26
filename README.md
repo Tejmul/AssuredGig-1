@@ -1,6 +1,129 @@
-# AssuredGig - Modern Freelance Platform
+# AssuredGig - Freelance Platform
 
-AssuredGig is a comprehensive freelance marketplace built with Next.js 14, designed to connect clients with talented freelancers in a secure and efficient environment.
+A modern freelance platform built with Next.js 14, TypeScript, and Tailwind CSS. The platform allows clients to post jobs and freelancers to find work, with features like real-time messaging, secure payments, and portfolio management.
+
+## Features
+
+- 🔐 **Authentication & Authorization**
+  - Email/Password authentication
+  - Role-based access control (Client, Freelancer, Admin)
+  - Protected routes and API endpoints
+  - Local storage-based user management
+
+- 💼 **Job Management**
+  - Post and manage jobs
+  - Search and filter jobs
+  - Apply for jobs with proposals
+  - Track job status and progress
+
+- 👥 **User Profiles**
+  - Freelancer portfolios
+  - Client profiles
+  - Skills and expertise management
+  - Work history and reviews
+
+- 💬 **Messaging System**
+  - Real-time chat between clients and freelancers
+  - File sharing capabilities
+  - Message notifications
+  - Chat history
+
+- 💰 **Payment System**
+  - Secure payment processing
+  - Escrow system for safe transactions
+  - Payment history and tracking
+  - Invoice generation
+
+- 📱 **Responsive Design**
+  - Mobile-first approach
+  - Modern and clean UI
+  - Dark mode support
+  - Accessible components
+
+## Tech Stack
+
+- **Framework**: Next.js 14
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **UI Components**: Shadcn UI
+- **Authentication**: NextAuth.js
+- **State Management**: React Context + Local Storage
+- **Form Handling**: React Hook Form + Zod
+- **Icons**: Lucide Icons
+- **Date Handling**: date-fns
+
+## Getting Started
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/assuredgig.git
+   cd assuredgig
+   ```
+
+2. Install dependencies:
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env.local
+   ```
+   Update the `.env.local` file with your configuration.
+
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Project Structure
+
+```
+frontend/
+├── src/
+│   ├── app/              # Next.js app router pages
+│   ├── components/       # Reusable UI components
+│   ├── lib/             # Utility functions and configurations
+│   ├── hooks/           # Custom React hooks
+│   ├── types/           # TypeScript type definitions
+│   └── styles/          # Global styles and Tailwind config
+├── public/              # Static assets
+└── package.json         # Project dependencies
+```
+
+## Authentication
+
+The application uses NextAuth.js for authentication with the following features:
+
+- Email/Password authentication
+- Role-based access control
+- Protected routes and API endpoints
+- Local storage-based user management
+- Session handling and token management
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- [Next.js](https://nextjs.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Shadcn UI](https://ui.shadcn.com/)
+- [NextAuth.js](https://next-auth.js.org/)
+- [React Hook Form](https://react-hook-form.com/)
+- [Zod](https://zod.dev/)
 
 ## 📚 Table of Contents
 - [For Beginners](#-for-beginners)
@@ -97,29 +220,25 @@ AssuredGig is like a digital marketplace where:
 
 ```
 assuredgig/
-├── src/
-│   ├── app/                    # Next.js 14 App Router
-│   │   ├── api/               # API Routes
-│   │   │   ├── auth/         # Authentication endpoints
-│   │   │   ├── jobs/         # Job-related endpoints
-│   │   │   ├── contracts/    # Contract management
-│   │   │   └── payments/     # Payment processing
-│   │   ├── (routes)/         # Page components
-│   │   └── layout.tsx        # Root layout
-│   ├── components/
-│   │   ├── ui/              # Reusable UI components
-│   │   ├── jobs/            # Job-related components
-│   │   ├── contracts/       # Contract components
-│   │   └── portfolio/       # Portfolio components
-│   ├── lib/                 # Utility functions and configs
-│   │   ├── auth.config.ts   # NextAuth configuration
-│   │   ├── db.ts           # Database client
-│   │   └── utils.ts        # Helper functions
-│   └── types/              # TypeScript type definitions
-├── prisma/
-│   ├── schema.prisma       # Database schema
-│   └── migrations/        # Database migrations
-└── public/               # Static assets
+├── frontend/                # Next.js frontend application
+│   ├── src/                # Source code
+│   ├── public/             # Static assets
+│   ├── package.json        # Frontend dependencies
+│   └── .env               # Frontend environment variables
+│
+├── backend/                # Express.js backend application
+│   ├── src/
+│   │   ├── controllers/   # Route controllers
+│   │   ├── models/        # Data models
+│   │   ├── routes/        # API routes
+│   │   ├── middleware/    # Custom middleware
+│   │   ├── config/        # Configuration files
+│   │   └── utils/         # Utility functions
+│   ├── package.json       # Backend dependencies
+│   └── .env              # Backend environment variables
+│
+└── prisma/                # Database schema and migrations
+    └── schema.prisma     # Prisma schema definition
 ```
 
 ## 🛠 Tech Stack Explained
@@ -181,40 +300,48 @@ assuredgig/
 - MySQL database
 - npm or yarn
 
-### Local Development Setup
+### Backend Setup
 
-1. **Clone the Repository**
+1. Navigate to the backend directory:
    ```bash
-   git clone https://github.com/yourusername/assuredgig.git
-   cd assuredgig
+   cd backend
    ```
 
-2. **Install Dependencies**
+2. Install dependencies:
    ```bash
    npm install
    ```
 
-3. **Environment Setup**
+3. Set up environment variables:
    ```bash
-   # Copy example env file
    cp .env.example .env
-
-   # Required variables:
-   DATABASE_URL="mysql://user:password@localhost:3306/assuredgig"
-   NEXTAUTH_SECRET="your-secret-key"
-   NEXTAUTH_URL="http://localhost:3000"
+   # Edit .env with your configuration
    ```
 
-4. **Database Setup**
+4. Start the development server:
    ```bash
-   # Generate Prisma client
-   npm run db:generate
-
-   # Run migrations
-   npm run db:migrate
+   npm run dev
    ```
 
-5. **Start Development Server**
+### Frontend Setup
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+4. Start the development server:
    ```bash
    npm run dev
    ```
@@ -482,4 +609,4 @@ This project is licensed under the MIT License.
 - [ ] Video Meetings
 - [ ] Payment Integration
 - [ ] Project Dashboard
-- [ ] Real-time Updates 
+- [ ] Real-time Updates # AssuredGig-1
