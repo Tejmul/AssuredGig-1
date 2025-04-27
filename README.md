@@ -610,3 +610,4 @@ This project is licensed under the MIT License.
 - [ ] Payment Integration
 - [ ] Project Dashboard
 - [ ] Real-time Updates # AssuredGig-1
+# AssuredGig-1
