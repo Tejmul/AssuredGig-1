@@ -2,6 +2,16 @@
 
 A modern freelance platform built with Next.js 14, TypeScript, and Tailwind CSS. The platform allows clients to post jobs and freelancers to find work, with features like real-time messaging, secure payments, and portfolio management.
 
+## Overview
+
+AssuredGig is a comprehensive freelance marketplace that connects talented freelancers with clients seeking professional services. The platform emphasizes security, transparency, and user experience, making it easy for both parties to collaborate effectively.
+
+### Key Benefits
+
+- **For Freelancers**: Find relevant projects, showcase your portfolio, and manage your work efficiently
+- **For Clients**: Post jobs, review proposals, and collaborate with skilled professionals
+- **For Both**: Secure payments, real-time communication, and transparent workflow
+
 ## Features
 
 - 🔐 **Authentication & Authorization**
@@ -52,46 +62,26 @@ A modern freelance platform built with Next.js 14, TypeScript, and Tailwind CSS.
 - **Icons**: Lucide Icons
 - **Date Handling**: date-fns
 
-## Getting Started
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/assuredgig.git
-   cd assuredgig
-   ```
-
-2. Install dependencies:
-   ```bash
-   cd frontend
-   npm install
-   ```
-
-3. Set up environment variables:
-   ```bash
-   cp .env.example .env.local
-   ```
-   Update the `.env.local` file with your configuration.
-
-4. Run the development server:
-   ```bash
-   npm run dev
-   ```
-
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
-
 ## Project Structure
 
 ```
-frontend/
-├── src/
-│   ├── app/              # Next.js app router pages
-│   ├── components/       # Reusable UI components
+assuredgig/
+├── src/                  # Source code
+│   ├── app/             # Next.js app router pages
+│   │   ├── api/         # API routes
+│   │   ├── auth/        # Authentication pages
+│   │   ├── jobs/        # Job-related pages
+│   │   └── profile/     # User profile pages
+│   ├── components/      # Reusable UI components
 │   ├── lib/             # Utility functions and configurations
 │   ├── hooks/           # Custom React hooks
 │   ├── types/           # TypeScript type definitions
 │   └── styles/          # Global styles and Tailwind config
 ├── public/              # Static assets
-└── package.json         # Project dependencies
+├── prisma/              # Database schema and migrations
+│   └── schema.prisma    # Prisma schema definition
+├── package.json         # Project dependencies
+└── .env                 # Environment variables
 ```
 
 ## Authentication
@@ -104,17 +94,78 @@ The application uses NextAuth.js for authentication with the following features:
 - Local storage-based user management
 - Session handling and token management
 
+## API Documentation
+
+### Authentication Endpoints
+
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - User login
+- `POST /api/auth/logout` - User logout
+- `GET /api/auth/session` - Get current session
+
+### Job Endpoints
+
+- `GET /api/jobs` - List all jobs
+- `POST /api/jobs` - Create a new job
+- `GET /api/jobs/[id]` - Get job details
+- `PUT /api/jobs/[id]` - Update job
+- `DELETE /api/jobs/[id]` - Delete job
+
+### User Endpoints
+
+- `GET /api/users/[id]` - Get user profile
+- `PUT /api/users/[id]` - Update user profile
+- `GET /api/users/[id]/portfolio` - Get user portfolio
+- `POST /api/users/[id]/portfolio` - Update portfolio
+
 ## Contributing
 
+We welcome contributions to AssuredGig! Here's how you can help:
+
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow the existing code style and conventions
+- Write meaningful commit messages
+- Include tests for new features
+- Update documentation as needed
+
+## Deployment
+
+### Prerequisites
+
+- Node.js 18.x or later
+- npm 9.x or later
+- A Vercel account (recommended for deployment)
+
+### Deployment Steps
+
+1. Build the application:
+   ```bash
+   npm run build
+   ```
+
+2. Deploy to Vercel:
+   ```bash
+   vercel
+   ```
+
+3. Configure environment variables in your deployment platform
+
+4. Set up a custom domain (optional)
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+For support, email support@assuredgig.com or join our [Discord community](https://discord.gg/assuredgig).
 
 ## Acknowledgments
 
@@ -220,25 +271,22 @@ AssuredGig is like a digital marketplace where:
 
 ```
 assuredgig/
-├── frontend/                # Next.js frontend application
-│   ├── src/                # Source code
-│   ├── public/             # Static assets
-│   ├── package.json        # Frontend dependencies
-│   └── .env               # Frontend environment variables
-│
-├── backend/                # Express.js backend application
-│   ├── src/
-│   │   ├── controllers/   # Route controllers
-│   │   ├── models/        # Data models
-│   │   ├── routes/        # API routes
-│   │   ├── middleware/    # Custom middleware
-│   │   ├── config/        # Configuration files
-│   │   └── utils/         # Utility functions
-│   ├── package.json       # Backend dependencies
-│   └── .env              # Backend environment variables
-│
-└── prisma/                # Database schema and migrations
-    └── schema.prisma     # Prisma schema definition
+├── src/                  # Source code
+│   ├── app/             # Next.js app router pages
+│   │   ├── api/         # API routes
+│   │   ├── auth/        # Authentication pages
+│   │   ├── jobs/        # Job-related pages
+│   │   └── profile/     # User profile pages
+│   ├── components/      # Reusable UI components
+│   ├── lib/             # Utility functions and configurations
+│   ├── hooks/           # Custom React hooks
+│   ├── types/           # TypeScript type definitions
+│   └── styles/          # Global styles and Tailwind config
+├── public/              # Static assets
+├── prisma/              # Database schema and migrations
+│   └── schema.prisma    # Prisma schema definition
+├── package.json         # Project dependencies
+└── .env                 # Environment variables
 ```
 
 ## 🛠 Tech Stack Explained
@@ -248,6 +296,7 @@ assuredgig/
    - App Router for file-based routing
    - Server Components for improved performance
    - API Routes for backend functionality
+   - Server-side rendering and static generation
 
 2. **TypeScript**
    - Type-safe code
@@ -300,34 +349,12 @@ assuredgig/
 - MySQL database
 - npm or yarn
 
-### Backend Setup
+### Setup
 
-1. Navigate to the backend directory:
+1. Clone the repository:
    ```bash
-   cd backend
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Set up environment variables:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
-
-4. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-### Frontend Setup
-
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
+   git clone https://github.com/yourusername/assuredgig.git
+   cd assuredgig
    ```
 
 2. Install dependencies:
@@ -367,8 +394,8 @@ assuredgig/
    ```typescript
    // Example of a simple API route
    export async function GET() {
-     // Get data from database
-     const jobs = await db.job.findMany();
+     // Get data from database using Prisma
+     const jobs = await prisma.job.findMany();
      
      // Return data as JSON
      return Response.json(jobs);
@@ -384,53 +411,6 @@ assuredgig/
          <h2>{title}</h2>
          <p>{description}</p>
        </div>
-     );
-   }
-   ```
-
-### Common Code Patterns Explained
-
-1. **Fetching Data**
-   ```typescript
-   // How to get data from the API
-   async function getJobs() {
-     const response = await fetch('/api/jobs');
-     const data = await response.json();
-     return data;
-   }
-   ```
-
-2. **Using Components**
-   ```typescript
-   // How to use components in pages
-   import { JobCard } from '@/components/JobCard';
-
-   export default function JobsPage() {
-     return (
-       <div>
-         <JobCard 
-           title="Web Developer Needed"
-           description="Looking for React expert..."
-         />
-       </div>
-     );
-   }
-   ```
-
-3. **Form Handling**
-   ```typescript
-   // Example of a simple form
-   export function JobForm() {
-     const handleSubmit = (e) => {
-       e.preventDefault();
-       // Handle form submission
-     };
-
-     return (
-       <form onSubmit={handleSubmit}>
-         <input type="text" placeholder="Job Title" />
-         <button type="submit">Create Job</button>
-       </form>
      );
    }
    ```
@@ -609,5 +589,4 @@ This project is licensed under the MIT License.
 - [ ] Video Meetings
 - [ ] Payment Integration
 - [ ] Project Dashboard
-- [ ] Real-time Updates # AssuredGig-1
-# AssuredGig-1
+- [ ] Real-time Updates
